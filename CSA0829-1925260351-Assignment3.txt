@@ -1,0 +1,733 @@
+CO-3 PYTHON – EXTRACTED SOURCE CODE
+=============================================
+
+QUESTION 1
+====================
+import random
+import time
+
+# Generate rainfall readings for 365 days
+readings = [round(random.uniform(0, 30), 2) for _ in range(365)]
+
+# Weekly rainfall totals
+weekly_totals = []
+
+for i in range(0, len(readings), 7):
+    week = readings[i:i + 7]
+    weekly_totals.append(round(sum(week), 2))
+
+# Wettest and driest weeks
+wettest_week = weekly_totals.index(max(weekly_totals)) + 1
+driest_week = weekly_totals.index(min(weekly_totals)) + 1
+
+# Naive moving average
+def naive_average(data):
+    averages = []
+
+    for i in range(len(data) - 6):
+        total = sum(data[i:i + 7])
+        averages.append(total / 7)
+
+    return averages
+
+# Running-sum moving average
+def running_average(data):
+    averages = []
+
+    if len(data) < 7:
+        return averages
+
+    total = sum(data[:7])
+    averages.append(total / 7)
+
+    for i in range(7, len(data)):
+        total = total - data[i - 7] + data[i]
+        averages.append(total / 7)
+
+    return averages
+
+# Dry days
+dry_days = [i + 1 for i, value in enumerate(readings) if value == 0]
+
+print("Total readings:", len(readings))
+print("Number of weeks:", len(weekly_totals))
+print("Wettest week:", wettest_week)
+print("Driest week:", driest_week)
+print("First 5 weekly totals:", weekly_totals[:5])
+print("Number of moving averages:", len(running_average(readings)))
+print("Dry days:", dry_days)
+
+# Experimental investigation
+for size in [365, 36500, 365000]:
+    data = [random.uniform(0, 30) for _ in range(size)]
+
+    start = time.perf_counter()
+    naive_average(data)
+    naive_time = time.perf_counter() - start
+
+    start = time.perf_counter()
+    running_average(data)
+    running_time = time.perf_counter() - start
+
+    print("\nReadings:", size)
+    print("Naive time:", naive_time)
+    print("Running-sum time:", running_time)
+
+# Edge cases
+print("\nEmpty list:", running_average([]))
+print("Short list:", running_average([2, 3, 4]))
+
+
+QUESTION 2
+====================
+import copy
+import sys
+import time
+
+rows, cols = 3, 4
+
+# Incorrect grid: all rows refer to the same list
+bad = [[0] * cols] * rows
+bad[0][1] = 7
+
+# Correct grid: each row is a separate list
+good = [[0 for _ in range(cols)] for _ in range(rows)]
+good[0][1] = 7
+
+print("bad :", bad)
+print("good:", good)
+print(bad[0] is bad[1], good[0] is good[1])
+
+# Tuples as dictionary keys
+stops = {
+    (13.0827, 80.2707): "Chennai Central",
+    (13.0418, 80.2341): "T. Nagar"
+}
+
+print(stops[(13.0418, 80.2341)])
+
+# Aliasing
+original = [[1, 2], [3, 4]]
+alias = original
+alias[0][0] = 99
+print("Aliasing:", original)
+
+# Shallow copy
+shallow = copy.copy(original)
+shallow[0][1] = 88
+print("Shallow copy:", original)
+
+# Deep copy
+deep = copy.deepcopy(original)
+deep[0][0] = 55
+print("Deep copy:", original)
+print("Independent deep copy:", deep)
+
+# Tuple unpacking
+coordinates = [(13.08, 80.27), (13.04, 80.23)]
+
+for latitude, longitude in coordinates:
+    print("Latitude:", latitude, "Longitude:", longitude)
+
+# List and tuple memory comparison
+values_list = list(range(1000000))
+values_tuple = tuple(range(1000000))
+
+print("List memory:", sys.getsizeof(values_list))
+print("Tuple memory:", sys.getsizeof(values_tuple))
+
+# Creation and indexing time
+for label, creator in [("List", list), ("Tuple", tuple)]:
+    start = time.perf_counter()
+    data = creator(range(100000))
+    creation_time = time.perf_counter() - start
+
+    start = time.perf_counter()
+    item = data[50000]
+    indexing_time = time.perf_counter() - start
+
+    print(label, "creation:", creation_time)
+    print(label, "indexing:", indexing_time)
+
+# A list inside a tuple can still be modified
+example = ([10, 20], 30)
+example[0].append(40)
+print("Tuple containing a list:", example)
+
+# A list cannot be used as a dictionary key
+try:
+    test = {[13.0418, 80.2341]: "T. Nagar"}
+except TypeError as error:
+    print("Error:", error)
+
+
+QUESTION 3
+====================
+import random
+import string
+import time
+from collections import Counter
+
+calls = [
+    "seeds not received seeds delayed",
+    "fertiliser price high",
+    "seeds price high subsidy not received"
+]
+
+STOP = {"not", "high"}
+
+# Count word frequencies
+def frequencies(texts, stop):
+    counts = {}
+
+    for text in texts:
+        words = text.lower().translate(
+            str.maketrans("", "", string.punctuation)
+        ).split()
+
+        for word in words:
+            if word not in stop:
+                counts[word] = counts.get(word, 0) + 1
+
+    return counts
+
+# Find top k words
+def top(counts, k):
+    return sorted(
+        counts.items(),
+        key=lambda item: (-item[1], item[0])
+    )[:k]
+
+print("Top words:", top(frequencies(calls, STOP), 3))
+
+# Group complaints by district
+complaints = [
+    ("Chennai", "Seeds not received"),
+    ("Madurai", "Water supply problem"),
+    ("Chennai", "Fertiliser price high"),
+    ("Salem", "Crop damage")
+]
+
+district_groups = {}
+
+for district, complaint in complaints:
+    district_groups.setdefault(district, []).append(complaint)
+
+print("\nComplaints by district:")
+
+for district, items in district_groups.items():
+    print(district, ":", items)
+
+# Experimental investigation
+sample_words = ["seeds", "price", "water", "seeds", "crop"]
+
+print("\nCounter result:", Counter(sample_words))
+
+# Compare dictionary counting and list.count()
+for size in [1000, 10000, 100000]:
+    data = [random.choice(sample_words) for _ in range(size)]
+
+    start = time.perf_counter()
+    result = {}
+
+    for word in data:
+        result[word] = result.get(word, 0) + 1
+
+    dictionary_time = time.perf_counter() - start
+
+    start = time.perf_counter()
+    distinct = set(data)
+    list_result = {word: data.count(word) for word in distinct}
+    list_count_time = time.perf_counter() - start
+
+    start = time.perf_counter()
+    counter_result = Counter(data)
+    counter_time = time.perf_counter() - start
+
+    print("\nComplaints:", size)
+    print("Dictionary time:", dictionary_time)
+    print("List.count time:", list_count_time)
+    print("Counter time:", counter_time)
+
+# Edge cases
+print("\nEmpty text:", frequencies([""], STOP))
+print("Upper/lower case:", frequencies(
+    ["SEEDS seeds Seeds"], STOP
+))
+print("Punctuation:", frequencies(
+    ["Seeds, seeds! price."], STOP
+))
+
+
+QUESTION 4
+====================
+import random
+import time
+
+ai_elective = {
+    "192311001", "192311004", "192311007", "192311009"
+}
+
+iot_elective = {
+    "192311002", "192311004", "192311009", "192311010"
+}
+
+all_students = {
+    f"1923110{i:02d}" for i in range(1, 11)
+}
+
+# Set operators
+both = ai_elective & iot_elective
+exactly_one = ai_elective ^ iot_elective
+neither = all_students - (ai_elective | iot_elective)
+
+print("clash :", sorted(both))
+print("exactly one:", sorted(exactly_one))
+print("neither :", sorted(neither))
+
+# Set methods
+both_method = ai_elective.intersection(iot_elective)
+one_method = ai_elective.symmetric_difference(iot_elective)
+neither_method = all_students.difference(
+    ai_elective.union(iot_elective)
+)
+
+print("\nMethod results:")
+print(both_method == both)
+print(one_method == exactly_one)
+print(neither_method == neither)
+
+# Remove duplicate registrations
+registrations = [
+    "192311001", "192311004", "192311001", "192311007"
+]
+
+unique_registrations = set(registrations)
+print("\nUnique registrations:", sorted(unique_registrations))
+
+# Membership timing
+for size in [10000, 100000, 1000000]:
+    data = list(range(size))
+    data_set = set(data)
+    target = size - 1
+
+    start = time.perf_counter()
+    target in data
+    list_time = time.perf_counter() - start
+
+    start = time.perf_counter()
+    target in data_set
+    set_time = time.perf_counter() - start
+
+    print("\nSize:", size)
+    print("List membership time:", list_time)
+    print("Set membership time:", set_time)
+
+# Nested loops and set intersection
+a = list(range(1000))
+b = list(range(500, 1500))
+
+start = time.perf_counter()
+common_nested = []
+
+for x in a:
+    for y in b:
+        if x == y:
+            common_nested.append(x)
+
+nested_time = time.perf_counter() - start
+
+start = time.perf_counter()
+common_set = set(a) & set(b)
+set_time = time.perf_counter() - start
+
+print("\nNested-loop time:", nested_time)
+print("Set intersection time:", set_time)
+print("Same result:", set(common_nested) == common_set)
+
+# Edge cases
+print("\nEmpty electives:", set() & set())
+print("Identical electives:", {1, 2} & {1, 2})
+
+
+QUESTION 5
+====================
+import random
+import time
+import sys
+
+readings = [3, 5, 9, 55, -60, 7, 1, 6, 52, 4]
+
+# Method 1: For loop with append
+valid_celsius = []
+valid_fahrenheit = []
+
+for c in readings:
+    if -50 <= c <= 50:
+        valid_celsius.append(c)
+        valid_fahrenheit.append((c * 9 / 5) + 32)
+
+# Method 2: List comprehension
+clean_celsius = [c for c in readings if -50 <= c <= 50]
+
+clean_fahrenheit = [
+    (c * 9 / 5) + 32
+    for c in readings if -50 <= c <= 50
+]
+
+# Method 3: map() and filter()
+filtered = list(filter(lambda c: -50 <= c <= 50, readings))
+
+mapped = list(map(
+    lambda c: (c * 9 / 5) + 32,
+    filtered
+))
+
+# Alarm minutes: temperature outside 2°C to 8°C
+alarm_minutes = [
+    minute for minute, temp in enumerate(readings, start=1)
+    if -50 <= temp <= 50 and not (2 <= temp <= 8)
+]
+
+print("Valid Celsius:", valid_celsius)
+print("Valid Fahrenheit:", valid_fahrenheit)
+print("List comprehension:", clean_celsius)
+print("Map and filter:", filtered)
+print("Fahrenheit using map:", mapped)
+print("Alarm minutes:", alarm_minutes)
+
+# Dictionary comprehension
+temperature_dict = {
+    minute: temp for minute, temp in enumerate(readings, start=1)
+    if -50 <= temp <= 50
+}
+
+# Set comprehension
+temperature_set = {
+    temp for temp in readings if -50 <= temp <= 50
+}
+
+print("Temperature dictionary:", temperature_dict)
+print("Unique valid temperatures:", temperature_set)
+
+# Experimental investigation
+for size in [10000, 100000, 1000000]:
+    data = [random.uniform(-60, 60) for _ in range(size)]
+
+    start = time.perf_counter()
+    loop_result = []
+
+    for c in data:
+        if -50 <= c <= 50:
+            loop_result.append((c * 9 / 5) + 32)
+
+    loop_time = time.perf_counter() - start
+
+    start = time.perf_counter()
+    comprehension_result = [
+        (c * 9 / 5) + 32 for c in data if -50 <= c <= 50
+    ]
+    comprehension_time = time.perf_counter() - start
+
+    start = time.perf_counter()
+    map_result = list(map(
+        lambda c: (c * 9 / 5) + 32,
+        filter(lambda c: -50 <= c <= 50, data)
+    ))
+    map_time = time.perf_counter() - start
+
+    print("\nReadings:", size)
+    print("Loop time:", loop_time)
+    print("Comprehension time:", comprehension_time)
+    print("Map/filter time:", map_time)
+    print("All results equal:", 
+          loop_result == comprehension_result == map_result)
+
+# Memory comparison
+list_data = [x for x in range(10000)]
+generator_data = (x for x in range(10000))
+
+print("\nList memory:", sys.getsizeof(list_data))
+print("Generator memory:", sys.getsizeof(generator_data))
+
+# Edge cases
+all_valid = [3, 4, 5]
+all_invalid = [60, -70, 100]
+
+print("All valid:", [x for x in all_valid if -50 <= x <= 50])
+print("All invalid:", [x for x in all_invalid if -50 <= x <= 50])
+
+
+QUESTION 6
+====================
+import time
+
+# Railway timetable
+trains = {
+    "12601": {
+        "name": "Chennai Express",
+        "stops": [
+            ("Chennai", "06:00", "06:10"),
+            ("Katpadi", "08:00", "08:05"),
+            ("Bengaluru", "10:30", "10:40")
+        ],
+        "days": {"Mon", "Wed", "Fri"}
+    },
+
+    "12602": {
+        "name": "City Express",
+        "stops": [
+            ("Chennai", "07:00", "07:15"),
+            ("Katpadi", "09:00", "09:05"),
+            ("Coimbatore", "12:00", "12:10")
+        ],
+        "days": {"Tue", "Thu", "Sat"}
+    },
+
+    "12603": {
+        "name": "Southern Express",
+        "stops": [
+            ("Chennai", "08:00", "08:10"),
+            ("Salem", "11:00", "11:05"),
+            ("Coimbatore", "13:00", "13:10")
+        ],
+        "days": {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
+    },
+
+    "12604": {
+        "name": "Metro Express",
+        "stops": [
+            ("Chennai", "09:00", "09:10"),
+            ("Katpadi", "11:00", "11:05"),
+            ("Bengaluru", "13:00", "13:10")
+        ],
+        "days": {"Sun"}
+    },
+
+    "12605": {
+        "name": "Coastal Express",
+        "stops": [
+            ("Chennai", "10:00", "10:10"),
+            ("Salem", "12:00", "12:05"),
+            ("Coimbatore", "14:00", "14:10")
+        ],
+        "days": {"Mon", "Fri"}
+    }
+}
+
+# Create station index
+station_index = {}
+
+for train_no, details in trains.items():
+    for station, arrival, departure in details["stops"]:
+        station_index.setdefault(station, []).append(train_no)
+
+# Search trains
+def find_trains(station, day):
+    results = []
+
+    for train_no in station_index.get(station, []):
+        train = trains[train_no]
+
+        if day in train["days"]:
+            for stop in train["stops"]:
+                if stop[0] == station:
+                    results.append(
+                        (train_no, train["name"], stop[2])
+                    )
+
+    return sorted(results, key=lambda x: x[2])
+
+station = "Katpadi"
+day = "Mon"
+
+print("Trains at", station, "on", day)
+
+for train_no, name, departure in find_trains(station, day):
+    print(train_no, name, departure)
+
+# Print complete timetable
+print("\nComplete Timetable:")
+
+for train_no, details in trains.items():
+    print("\nTrain:", train_no, details["name"])
+    print("Running days:", sorted(details["days"]))
+
+    for station, arrival, departure in details["stops"]:
+        print(station, arrival, departure)
+
+# Performance comparison
+for size in [100, 1000, 10000]:
+    timetable = {}
+    index = {}
+
+    for i in range(size):
+        train_no = str(i)
+        station_name = "Station" + str(i % 100)
+
+        timetable[train_no] = {
+            "stops": [
+                (station_name, "10:00", "10:10")
+            ],
+            "days": {"Mon"}
+        }
+
+        index.setdefault(station_name, []).append(train_no)
+
+    target = "Station50"
+
+    start = time.perf_counter()
+    without_index = []
+
+    for train_no, details in timetable.items():
+        for stop in details["stops"]:
+            if stop[0] == target and "Mon" in details["days"]:
+                without_index.append(train_no)
+
+    time_without_index = time.perf_counter() - start
+
+    start = time.perf_counter()
+    with_index = [
+        train_no for train_no in index.get(target, [])
+        if "Mon" in timetable[train_no]["days"]
+    ]
+
+    time_with_index = time.perf_counter() - start
+
+    print("\nNumber of trains:", size)
+    print("Without index:", time_without_index)
+    print("With index:", time_with_index)
+    print("Same result:", set(without_index) == set(with_index))
+
+# Unknown station
+print("\nUnknown station:", find_trains("Unknown", "Mon"))
+
+# Train that does not run on the selected day
+print("Sunday trains at Katpadi:", find_trains("Katpadi", "Sun"))
+
+
+QUESTION 7
+====================
+import re
+import time
+import random
+
+# Normalise phone number
+def normalise_number(number):
+    if not number:
+        return ""
+
+    digits = "".join(
+        character for character in number
+        if character.isdigit()
+    )
+
+    if len(digits) == 12 and digits.startswith("91"):
+        digits = digits[2:]
+
+    return digits
+
+# Normalise name
+def normalise_name(name):
+    return " ".join(name.strip().lower().split())
+
+# Merge contacts
+def merge_contacts(contacts):
+    merged = {}
+    missing_phone = []
+
+    for contact in contacts:
+        name = contact.get("name", "").strip()
+        phone = normalise_number(contact.get("phone", ""))
+        email = contact.get("email", "").strip().lower()
+
+        if not phone:
+            missing_phone.append({
+                "name": name,
+                "email": email
+            })
+            continue
+
+        if phone not in merged:
+            merged[phone] = {
+                "names": set(),
+                "phones": set(),
+                "emails": set()
+            }
+
+        if name:
+            merged[phone]["names"].add(name)
+
+        merged[phone]["phones"].add(phone)
+
+        if email:
+            merged[phone]["emails"].add(email)
+
+    return merged, missing_phone
+
+# Sample contacts
+contacts = [
+    {
+        "name": "Dr. Ravi",
+        "phone": "+91 98400 12345",
+        "email": "RAVI@gmail.com"
+    },
+    {
+        "name": "ravi kumar",
+        "phone": "9840012345",
+        "email": "ravi@example.com"
+    },
+    {
+        "name": "Anu",
+        "phone": "9876543210",
+        "email": "anu@gmail.com"
+    },
+    {
+        "name": "Ravi",
+        "phone": "98400-12345",
+        "email": "ravi@gmail.com"
+    },
+    {
+        "name": "Unknown",
+        "phone": "",
+        "email": "unknown@gmail.com"
+    }
+]
+
+merged, missing = merge_contacts(contacts)
+
+print("Merged Contacts:")
+
+for phone, details in merged.items():
+    print("\nPhone:", phone)
+    print("Names:", sorted(details["names"]))
+    print("Numbers:", sorted(details["phones"]))
+    print("Emails:", sorted(details["emails"]))
+
+print("\nContacts with missing phone:", missing)
+
+# Verify a small result manually
+print("\nNumber of merged contacts:", len(merged))
+
+# Performance experiment
+for size in [1000, 100000]:
+    large_contacts = []
+
+    for i in range(size):
+        number = str(9000000000 + (i // 2))
+
+        large_contacts.append({
+            "name": "Person " + str(i),
+            "phone": number,
+            "email": "person" + str(i) + "@example.com"
+        })
+
+    start = time.perf_counter()
+    result, missing_result = merge_contacts(large_contacts)
+    elapsed = time.perf_counter() - start
+
+    print("\nInput contacts:", size)
+    print("Merged contacts:", len(result))
+    print("Execution time:", elapsed)
+
+
